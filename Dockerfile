@@ -1,14 +1,12 @@
-# Use OpenJDK image
-FROM openjdk:17-alpine
-
-# Set working directory
+# Use Maven to build the app inside the container
+FROM maven:3.8.5-openjdk-17 AS build
 WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
 
-# Copy your jar file into the image (replace app.jar with your actual jar name)
-COPY target/app.jar app.jar
-
-# Expose the port your app runs on (change if needed)
+# Use OpenJDK to run the built JAR
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-
-# Run the jar file
-ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["java", "-jar", "app.jar"]
